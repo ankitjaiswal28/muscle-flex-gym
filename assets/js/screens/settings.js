@@ -145,7 +145,7 @@
         if ((b = e.target.closest('[data-theme-pick]'))) {
           var want = b.getAttribute('data-theme-pick'), light = document.documentElement.getAttribute('data-theme') === 'light';
           if ((want === 'light') !== light) ui.toggleTheme();
-          paintPanel(false);
+          [].forEach.call(panel.querySelectorAll('[data-theme-pick]'), function (x) { x.setAttribute('aria-checked', x === b); });
           return;
         }
         if ((b = e.target.closest('[data-sample]'))) { b.setAttribute('aria-checked', b.getAttribute('aria-checked') !== 'true'); return; }

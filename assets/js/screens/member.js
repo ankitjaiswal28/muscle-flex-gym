@@ -112,6 +112,7 @@
             '</div>';
           var box = panel.querySelector('#p-cal');
           box.innerHTML = charts.calendar(d.attendance, Math.max(240, box.clientWidth), { label: 'Attendance for the last 12 weeks: ' + d.visits84 + ' visits.' });
+          motion.drawChart(box);
         },
 
         payments: function () {

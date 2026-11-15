@@ -12,6 +12,20 @@
    Engine: the native Web Animations API. No library, nothing to download.
    CSS-only motion (hover lift, press, live dot, shimmer, nav indicator)
    lives in the "Motion" block at the end of components.css.
+
+   What moves, and where it is wired:
+     page change ........ pageIn + fills + countAll   (router.js, every screen)
+     tab underline ...... tabSlide                    (automatic, any .tabs bar)
+     tab panel swap ..... contentIn
+     charts ............. drawChart                   (screens call it after drawing)
+     live numbers ....... bump
+     menus .............. popIn / popOut              (ui.js)
+     drawers, modals .... overlayIn / overlayOut      (ui.js)
+     toasts ............. toastIn / toastOut          (ui.js)
+     lists .............. listInsert / listRemove
+     kanban ............. dragMove / dragDrop         (screens/leads.js)
+     theme switch ....... themeSwap                   (ui.js)
+     headlines .......... stagger                     (screens/login.js)
    ========================================================================== */
 (function () {
   'use strict';
@@ -55,15 +69,15 @@
     var blocks = [], kids = view.children, i, j;
     for (i = 0; i < kids.length; i++) {
       var k = kids[i];
-      /* a grid of cards staggers card by card; everything else moves as one block */
-      if (k.classList.contains('grid')) { for (j = 0; j < k.children.length; j++) blocks.push(k.children[j]); }
+      /* a layout of cards staggers card by card; everything else moves as one block */
+      if (/(^|\s)(grid|dash|msg|appdemo|settings|board)(\s|$)/.test(k.className)) { for (j = 0; j < k.children.length; j++) blocks.push(k.children[j]); }
       else blocks.push(k);
     }
-    var anims = blocks.slice(0, 14).map(function (el, n) {
+    var anims = blocks.slice(0, 18).map(function (el, n) {
       /* fill: backwards → hidden only while waiting its turn, then released */
       return el.animate(RISE, { duration: DUR.page, delay: n * DUR.stagger, easing: EASE_OUT, fill: 'backwards' });
     });
-    guard(anims, DUR.page + 14 * DUR.stagger + 200);
+    guard(anims, DUR.page + 18 * DUR.stagger + 200);
   }
 
   /* ---- tab panel / list swap: quick fade + 8px rise ---------------------- */
@@ -193,6 +207,7 @@
     each(root, '.donut', function (el) { anims.push(el.animate([{ transform: 'rotate(-50deg)' }, { transform: 'rotate(0deg)' }], { duration: 700, easing: EASE_OUT })); });
     each(root, '.donut__seg', function (el, i) { anims.push(el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, delay: 60 + i * 70, easing: 'linear', fill: 'backwards' })); });
     each(root, '.ring', function (el) { anims.push(el.animate([{ opacity: 0, transform: 'rotate(-70deg)' }, { opacity: 1, transform: 'rotate(0deg)' }], { duration: 700, delay: 80, easing: EASE_OUT, fill: 'backwards' })); });
+    each(root, '.cal__cell--on', function (el, i) { anims.push(el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, delay: 80 + i * 14, easing: 'linear', fill: 'backwards' })); });
     each(root, '.heat__col', function (el, i) { anims.push(el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 280, delay: 60 + i * 18, easing: 'linear', fill: 'backwards' })); });
     guard(anims, 1600);
   }
@@ -230,6 +245,90 @@
       { duration: 190, easing: EASE_OUT, fill: 'forwards' }, done);
   }
 
+  /* ---- progress bars grow from empty on page load ------------------------ */
+  function fills(root) {
+    if (!root || reduced() || !root.animate) return;
+    var anims = [];
+    each(root, '.meter i', function (el, i) {
+      var to = el.style.transform || 'scaleX(1)';
+      anims.push(el.animate([{ transform: 'scaleX(0)' }, { transform: to }], { duration: 620, delay: 160 + Math.min(i, 12) * 25, easing: EASE_OUT, fill: 'backwards' }));
+    });
+    guard(anims, 1400);
+  }
+
+  /* ---- a live number changed: small tick, not a flash --------------------- */
+  function bump(el) {
+    play(el, [{ opacity: .35, transform: 'translateY(-5px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 240, easing: EASE_OUT });
+  }
+
+  /* ---- menus leave faster than they arrive -------------------------------- */
+  function popOut(el, done) {
+    play(el, [{ opacity: 1, transform: 'translateY(0) scale(1)' }, { opacity: 0, transform: 'translateY(-4px) scale(.98)' }], { duration: 110, easing: EASE_STATE, fill: 'forwards' }, done);
+  }
+
+  /* ---- a set of lines or items rising one after another ------------------- */
+  function stagger(nodes, o) {
+    o = o || {};
+    if (reduced()) return;
+    var anims = [], y = o.y == null ? 16 : o.y, dur = o.dur || 500, gap = o.gap || 80, delay = o.delay || 0;
+    [].forEach.call(nodes, function (el, i) {
+      if (!el.animate) return;
+      anims.push(el.animate([{ opacity: 0, transform: 'translateY(' + y + 'px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: dur, delay: delay + i * gap, easing: EASE_OUT, fill: 'backwards' }));
+    });
+    guard(anims, delay + nodes.length * gap + dur + 200);
+  }
+
+  /* ---- tab underline slides to the newly selected tab --------------------- */
+  /* Works for every .tabs bar with no per-screen code: an observer notices the
+     selection change and plays the underline from where it was (FLIP). */
+  var tabSeen = typeof WeakMap === 'function' ? new WeakMap() : null;
+  function tabSlide(bar) {
+    if (!tabSeen) return;
+    var sel = bar.querySelector('.tab[aria-selected="true"]');
+    if (!sel) return;
+    var br = bar.getBoundingClientRect(), r = sel.getBoundingClientRect();
+    var now = { x: r.left - br.left + bar.scrollLeft, w: r.width }, was = tabSeen.get(bar);
+    tabSeen.set(bar, now);
+    if (!was || !now.w || reduced() || !sel.animate || (Math.abs(was.x - now.x) < 1 && Math.abs(was.w - now.w) < 1)) return;
+    try {
+      sel.animate([{ transform: 'translateX(' + (was.x - now.x) + 'px) scaleX(' + (was.w / now.w) + ')' }, { transform: 'translateX(0) scaleX(1)' }],
+        { duration: 260, easing: EASE_OUT, pseudoElement: '::after' });
+    } catch (e) { /* pseudo-element animation not supported: the underline just jumps */ }
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    var view = document.getElementById('view');
+    if (!view || !window.MutationObserver) return;
+    new MutationObserver(function (list) {
+      var bars = [];
+      list.forEach(function (m) {
+        var t = m.target, bar = t && t.closest ? t.closest('.tabs') : null;
+        if (bar && bars.indexOf(bar) < 0) bars.push(bar);
+        /* a freshly painted screen: remember where each underline starts */
+        [].forEach.call(m.addedNodes || [], function (n) {
+          if (n.nodeType !== 1) return;
+          var found = n.matches && n.matches('.tabs') ? [n] : n.querySelectorAll ? n.querySelectorAll('.tabs') : [];
+          [].forEach.call(found, function (b) { if (bars.indexOf(b) < 0) bars.push(b); });
+        });
+      });
+      bars.forEach(tabSlide);
+    }).observe(view, { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-selected'] });
+  });
+
+  /* ---- theme switch: crossfade old look into new (opacity only) ----------- */
+  /* `apply` flips the theme. It always runs exactly once, transition or not. */
+  function themeSwap(apply) {
+    var ran = false;
+    function run() { if (!ran) { ran = true; apply(); } }
+    if (!reduced() && !document.hidden && typeof document.startViewTransition === 'function') {
+      try {
+        var vt = document.startViewTransition(run);
+        /* a second switch mid-fade skips the first one — that is fine, not an error */
+        ['ready', 'finished', 'updateCallbackDone'].forEach(function (k) { if (vt && vt[k] && vt[k].catch) vt[k].catch(function () {}); });
+      } catch (e) { run(); }
+      setTimeout(run, 120);            /* never wait on a frame that may not come */
+    } else run();
+  }
+
   App.motion = {
     reduced: reduced,
     ease: { out: EASE_OUT, state: EASE_STATE },
@@ -251,6 +350,12 @@
     listRemove: listRemove,
     dragLift: dragLift,
     dragMove: dragMove,
-    dragDrop: dragDrop
+    dragDrop: dragDrop,
+    fills: fills,
+    bump: bump,
+    popOut: popOut,
+    stagger: stagger,
+    tabSlide: tabSlide,
+    themeSwap: themeSwap
   };
 })();

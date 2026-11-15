@@ -132,6 +132,7 @@
       if (typeof off === 'function') cleanup = off;
       App.motion.pageIn(view);
       App.motion.countAll(view);
+      App.motion.fills(view);
     } catch (err) {
       if (window.console) console.error(err);
       view.innerHTML = '<section class="card">' + ui.state({

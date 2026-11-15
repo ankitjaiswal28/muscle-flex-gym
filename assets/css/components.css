@@ -755,9 +755,11 @@ button.avatar:hover { border-color: var(--border-strong); }
   .btn:active, .icon-btn:active, button.avatar:active { transform: scale(.98); }
 
   /* Cards lift 2px on hover (pointer devices only) */
-  .card { transition: transform 200ms var(--ease-out), border-color 200ms var(--ease-state); }
+  /* Lift only what you can act on: KPI, plan, staff and lead cards, product tiles.
+     Big panels with tables and charts stay still. */
+  .kpi, .plan, .person, .lcard, a.card { transition: transform 200ms var(--ease-out), border-color 200ms var(--ease-state), box-shadow 200ms var(--ease-state); }
   @media (hover: hover) {
-    .card:hover { transform: translateY(-2px); border-color: var(--border-strong); }
+    .kpi:hover, .plan:hover, .person:hover, a.card:hover, .lcard:not(.is-placeholder):not(.is-ghost):hover, .tile:hover, .cam:hover { transform: translateY(-2px); border-color: var(--border-strong); }
   }
 
   /* Sidebar indicator slides between items */
@@ -1648,3 +1650,11 @@ button.link { font: inherit; cursor: pointer; }
 }
 
 .cohort .cohort__c span.cohort__hi { color: var(--iron-950); }
+
+/* Motion pass: the tab underline is its own layer so it can slide */
+.tab[aria-selected="true"]::after { transform-origin: 0 50%; }
+/* theme crossfade (View Transitions): quick and linear, nothing slides */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 220ms; animation-timing-function: linear; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}

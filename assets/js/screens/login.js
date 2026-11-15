@@ -89,6 +89,10 @@
       document.addEventListener('keydown', onKey);
 
       paintMode(); paintBody(false);
+      /* headline rises in line by line, then the facts, then the form */
+      motion.stagger(view.querySelectorAll('.login__tag span'), { y: 28, dur: 700, gap: 110, delay: 120 });
+      motion.stagger(view.querySelectorAll('.login__facts li'), { y: 12, dur: 450, gap: 70, delay: 560 });
+      motion.stagger(view.querySelectorAll('.login__card > *'), { y: 12, dur: 420, gap: 50, delay: 220 });
       return function () { document.removeEventListener('keydown', onKey); };
     }
   });

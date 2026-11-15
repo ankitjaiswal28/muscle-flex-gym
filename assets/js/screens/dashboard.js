@@ -407,13 +407,14 @@
       var pool = MF.members.filter(function (m) { return m.status === 'active' || m.status === 'expiring' || m.status === 'overdue'; });
       function updateFloor() {
         var p = floorPct();
+        var changed = el('floor-val').textContent !== String(MF.live.onFloor);
         el('floor-val').textContent = MF.live.onFloor;
         el('floor-pct').textContent = p;
         el('floor-label').textContent = level(p);
         el('kpi-floor').textContent = MF.live.onFloor;
+        if (changed) { motion.bump(el('floor-val')); motion.bump(el('kpi-floor')); }
         charts.setGauge(view, p / 100);
-        var pill = document.getElementById('live-count');
-        if (pill) pill.textContent = MF.live.onFloor;
+        ui.refreshLiveCount();
       }
       function tick() {
         if (!document.hidden && MF.status(MF.now).open) {

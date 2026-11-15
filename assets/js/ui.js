@@ -79,8 +79,10 @@
   function closePopover() {
     if (!pop) return;
     pop.anchor.setAttribute('aria-expanded', 'false');
-    if (pop.el.parentNode) pop.el.parentNode.removeChild(pop.el);
+    var gone = pop.el;
     pop = null;
+    gone.style.pointerEvents = 'none';
+    App.motion.popOut(gone, function () { if (gone.parentNode) gone.parentNode.removeChild(gone); });
   }
   function popover(anchor, html, label) {
     if (pop && pop.anchor === anchor) { closePopover(); return null; }
@@ -189,7 +191,7 @@
   }
   function refreshLiveCount() {
     var el = document.getElementById('live-count');
-    if (el) el.textContent = MF.live.onFloor;
+    if (el && el.textContent !== String(MF.live.onFloor)) { el.textContent = MF.live.onFloor; App.motion.bump(el); }
   }
 
   /* ---------------------------------------------------- receipt drawer -- */
@@ -485,7 +487,10 @@
   function toggleTheme() {
     var root = document.documentElement;
     var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-    if (next === 'light') root.setAttribute('data-theme', 'light'); else root.removeAttribute('data-theme');
+    App.motion.themeSwap(function () {
+      if (next === 'light') root.setAttribute('data-theme', 'light'); else root.removeAttribute('data-theme');
+      applyThemeUi();
+    });
     try { localStorage.setItem('mf-theme', next); } catch (e) { /* file:// with storage blocked — fine */ }
     applyThemeUi();
     document.dispatchEvent(new CustomEvent('mf:theme', { detail: next }));
