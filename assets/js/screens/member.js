@@ -77,14 +77,14 @@
             '<ul class="reasons">' + riskReasons(m).map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul>' +
             '<span class="meter meter--lg' + (lvl === 'High' ? '' : ' meter--quiet') + '" aria-hidden="true"><i style="transform:scaleX(' + m.churnRisk / 100 + ')"></i></span></section>' +
 
-          '<section class="card qrcard"><div class="qrcard__code">' + charts.qr(m.id, 104) + '</div>' +
-            '<div><p class="eyebrow">Door pass</p><p class="pstat__big">' + m.id + '</p><p class="muted">Scan at the door. Works 05:00–22:00.</p>' +
+          '<section class="card qrcard"><div class="qrcard__code">' + charts.qr(m.id, 92) + '</div>' +
+            '<div><p class="eyebrow">Door pass</p><p class="pstat__big">' + m.id + '</p><p class="muted">Scan at the door.</p>' +
             '<button class="btn btn--sm" type="button" style="margin-top:var(--s-3)" data-toast="Door pass sent to ' + esc(first) + '’s phone.">Send to phone</button></div></section>' +
         '</div>' +
 
         '<section class="card card--flush">' +
           '<div class="tabs" role="tablist" aria-label="Member details" id="p-tabs">' + TABS.map(function (t) {
-            var n = t[0] === 'payments' ? d.payments.length : t[0] === 'pt' ? d.pt.length : t[0] === 'notes' ? d.notes.length : null;
+            var n = t[0] === 'payments' ? d.payments.length : t[0] === 'pt' ? (d.pt.length || null) : t[0] === 'notes' ? d.notes.length : null;
             return '<button class="tab" type="button" role="tab" id="ptab-' + t[0] + '" data-tab="' + t[0] + '" aria-controls="p-panel" aria-selected="false" tabindex="-1">' + t[1] + (n !== null ? '<span class="tab__n">' + n + '</span>' : '') + '</button>';
           }).join('') + '</div>' +
           '<div id="p-panel" role="tabpanel" class="ppanel"></div>' +
@@ -132,13 +132,15 @@
             '<div class="split split--even">' +
               '<div><div class="card__head"><div><h2>Body</h2><p>Weight ' + b.weight[b.weight.length - 1] + ' kg ' + delta(b.weight, ' kg', m.goal === 'Lose fat' || m.goal === 'Bodybuilding prep') +
                 ' · Body fat ' + b.fat[b.fat.length - 1] + '% ' + delta(b.fat, '%', true) + '</p></div>' +
-                '<div class="legend"><span><i class="lg lg--now"></i>Weight kg</span><span><i class="lg lg--mute"></i>Body fat %</span></div></div><div id="p-body" class="chartbox"></div></div>' +
+                '</div><p class="eyebrow">Weight, kg</p><div id="p-weight" class="chartbox"></div>' +
+                '<p class="eyebrow" style="margin-top:var(--s-3)">Body fat, %</p><div id="p-fat" class="chartbox"></div></div>' +
               '<div><div class="card__head"><div><h2>Lifts</h2><p>Squat ' + b.squat[7] + ' ' + delta(b.squat, ' kg') + ' · Bench ' + b.bench[7] + ' ' + delta(b.bench, ' kg') + ' · Deadlift ' + b.dead[7] + ' ' + delta(b.dead, ' kg') + '</p></div>' +
                 '<div class="legend"><span><i class="lg lg--now"></i>Deadlift</span><span><i class="lg lg--mid"></i>Squat</span><span><i class="lg lg--mute"></i>Bench</span></div></div><div id="p-lifts" class="chartbox"></div></div>' +
             '</div>';
-          var b1 = panel.querySelector('#p-body'), b2 = panel.querySelector('#p-lifts');
-          b1.innerHTML = charts.line([{ name: 'Body fat', values: b.fat, cls: 'ln-mute', unit: '%' }, { name: 'Weight', values: b.weight, cls: 'ln-accent', unit: ' kg' }], b.labels, Math.max(240, b1.clientWidth), 220, { label: 'Weight and body fat over 8 months.' });
-          b2.innerHTML = charts.line([{ name: 'Bench', values: b.bench, cls: 'ln-mute', unit: ' kg' }, { name: 'Squat', values: b.squat, cls: 'ln-mid', unit: ' kg' }, { name: 'Deadlift', values: b.dead, cls: 'ln-accent', unit: ' kg' }], b.labels, Math.max(240, b2.clientWidth), 220, { label: 'Squat, bench and deadlift over 8 months.' });
+          var b1 = panel.querySelector('#p-weight'), b3 = panel.querySelector('#p-fat'), b2 = panel.querySelector('#p-lifts');
+          b1.innerHTML = charts.line([{ name: 'Weight', values: b.weight, cls: 'ln-accent', unit: ' kg' }], b.labels, Math.max(240, b1.clientWidth), 118, { label: 'Body weight over 8 months.' });
+          b3.innerHTML = charts.line([{ name: 'Body fat', values: b.fat, cls: 'ln-mute', unit: '%' }], b.labels, Math.max(240, b3.clientWidth), 118, { label: 'Body fat over 8 months.' });
+          b2.innerHTML = charts.line([{ name: 'Bench', values: b.bench, cls: 'ln-mute', unit: ' kg' }, { name: 'Squat', values: b.squat, cls: 'ln-mid', unit: ' kg' }, { name: 'Deadlift', values: b.dead, cls: 'ln-accent', unit: ' kg' }], b.labels, Math.max(240, b2.clientWidth), 268, { label: 'Squat, bench and deadlift over 8 months.' });
           motion.drawChart(panel);
         },
 

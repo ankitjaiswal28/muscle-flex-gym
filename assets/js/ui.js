@@ -580,7 +580,7 @@
     var nav = t.closest('[data-nav]');
     if (nav) location.hash = nav.getAttribute('data-nav');
 
-    if (pop && !t.closest('.popover')) closePopover();
+    if (pop && !t.closest('.popover') && !pop.anchor.contains(t)) closePopover();   /* the anchor toggles itself */
     else if (pop && t.closest('.menu-item')) closePopover();
   });
 

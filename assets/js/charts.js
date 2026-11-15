@@ -183,7 +183,7 @@
     o = o || {};
     var first = new Date(days[0].date + 'T00:00:00'), offset = (first.getDay() + 6) % 7;
     var cols = Math.ceil((days.length + offset) / 7), ml = 30, gap = 4;
-    var cell = Math.max(10, Math.min(22, (w - ml - gap * (cols - 1)) / cols)), h = Math.ceil(7 * (cell + gap) + 2);
+    var cell = Math.max(10, Math.min(30, (w - ml - gap * (cols - 1)) / cols)), h = Math.ceil(7 * (cell + gap) + 2);
     var names = ['Mon', '', 'Wed', '', 'Fri', '', 'Sun'], out = svgOpen(w, h, o.label, 'cal');
     names.forEach(function (n, i) { if (n) out += '<text class="axis" x="0" y="' + r1(i * (cell + gap) + cell / 2 + 4) + '">' + n + '</text>'; });
     days.forEach(function (d, i) {

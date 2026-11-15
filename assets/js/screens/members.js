@@ -22,6 +22,7 @@
     risk: function (a, b) { return b.churnRisk - a.churnRisk; },
     joined: function (a, b) { return b.joined.localeCompare(a.joined); }
   };
+  var HIGH_FIRST = { lastVisit: 1, visits: 1, risk: 1, joined: 1 };   /* these sort biggest-first by default */
   var COLS = [['name', 'Member'], ['plan', 'Plan'], ['status', 'Status'], ['expires', 'Expires'], ['lastVisit', 'Last visit'], ['visits', '30 days'], ['risk', 'Churn risk']];
 
   function matches(m, skipStatus) {
@@ -115,16 +116,18 @@
         var ths = view.querySelectorAll('.th-sort');
         for (var i = 0; i < ths.length; i++) {
           var on = ths[i].getAttribute('data-sort') === state.sort;
-          ths[i].parentNode.setAttribute('aria-sort', on ? (state.dir === 1 ? 'ascending' : 'descending') : 'none');
+          var desc = (state.dir === 1) === !!HIGH_FIRST[state.sort];
+          ths[i].parentNode.setAttribute('aria-sort', on ? (desc ? 'descending' : 'ascending') : 'none');
           ths[i].classList.toggle('is-on', on);
-          ths[i].classList.toggle('is-desc', on && state.dir === -1);
+          ths[i].classList.toggle('is-desc', on && desc);
         }
         $('m-sort').value = SORTS[state.sort] && $('m-sort').querySelector('option[value="' + state.sort + '"]') ? state.sort : 'name';
 
         /* pager */
-        var from = all.length ? (state.page - 1) * PER_PAGE + 1 : 0, to = Math.min(all.length, state.page * PER_PAGE), nums = '';
+        var from = all.length ? (state.page - 1) * PER_PAGE + 1 : 0, to = Math.min(all.length, state.page * PER_PAGE), nums = '', gap = false;
         for (var p = 1; p <= pages; p++) {
-          if (pages > 7 && p > 2 && p < pages - 1 && Math.abs(p - state.page) > 1) { if (nums.slice(-1) !== '…') nums += '<span class="pager__gap">…</span>'; continue; }
+          if (pages > 7 && p > 2 && p < pages - 1 && Math.abs(p - state.page) > 1) { if (!gap) { nums += '<span class="pager__gap">…</span>'; gap = true; } continue; }
+          gap = false;
           nums += '<button class="pager__n" type="button" data-page="' + p + '"' + (p === state.page ? ' aria-current="page"' : '') + '>' + p + '</button>';
         }
         pager.innerHTML = '<span class="faint">' + (all.length ? from + '–' + to + ' of ' + all.length : '0 members') + '</span>' +
