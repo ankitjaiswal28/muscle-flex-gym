@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <title>Muscle Flex Gym</title>
+  <script>
+    /* Apply the saved theme before first paint (no flash). */
+    (function () {
+      try { if (localStorage.getItem('mf-theme') === 'light') document.documentElement.setAttribute('data-theme', 'light'); } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+  <a class="skip-link" href="#view">Skip to content</a>
+
+  <div class="app" id="app">
+
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+      <a class="brand" href="#/dashboard" aria-label="Muscle Flex Gym — overview">
+        <span class="brand__mark" aria-hidden="true">MF</span>
+        <span class="brand__word">Muscle <span>Flex</span><small class="brand__sub">SHREWSBURY</small></span>
+      </a>
+      <nav class="nav" id="nav" aria-label="Screens"></nav>
+      <div class="sidebar__foot" id="sidebar-foot"></div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <a class="topbar__brand" href="#/dashboard" aria-label="Muscle Flex Gym — overview">
+          <span class="brand__mark" aria-hidden="true">MF</span>
+        </a>
+
+        <button class="search-trigger" type="button" data-action="palette" aria-label="Search members, screens and actions (Ctrl+K)">
+          <i data-icon="search" class="icon--sm"></i>
+          <span>Search members, actions…</span>
+          <kbd class="kbd">Ctrl K</kbd>
+        </button>
+
+        <div class="topbar__spacer"></div>
+
+        <div class="live-pill status-chip" id="status-chip" role="status"></div>
+        <a class="live-pill" id="live-pill" href="#/checkins"></a>
+
+        <button class="btn btn--primary btn--new" type="button" data-action="new" aria-haspopup="menu" aria-expanded="false" aria-label="New — quick actions">
+          <i data-icon="plus" class="icon--sm"></i><span>New</span>
+        </button>
+
+        <button class="icon-btn theme-toggle" type="button" data-action="theme" aria-label="Switch to light mode"></button>
+
+        <button class="icon-btn" type="button" data-action="notifications" aria-haspopup="menu" aria-expanded="false" aria-label="Notifications">
+          <i data-icon="bell"></i><span class="icon-btn__dot" aria-hidden="true"></span>
+        </button>
+
+        <button class="avatar avatar--owner" id="owner-avatar" type="button" data-action="account" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu"></button>
+      </header>
+
+      <main id="view" tabindex="-1"></main>
+    </div>
+
+    <nav class="tabbar" id="tabbar" aria-label="Primary"></nav>
+  </div>
+
+  <div id="overlay-root"></div>
+  <div class="toasts" id="toast-root" aria-live="polite"></div>
+
+  <noscript>
+    <p style="padding:24px;font-family:sans-serif">Muscle Flex needs JavaScript switched on to run this prototype.</p>
+  </noscript>
+
+  <!-- Classic scripts, in dependency order. No modules: they are blocked on file:// -->
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/motion.js"></script>
+  <script src="assets/js/charts.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/router.js"></script>
+
+  <script src="assets/js/screens/dashboard.js"></script>
+  <script src="assets/js/screens/members.js"></script>
+  <script src="assets/js/screens/member.js"></script>
+  <script src="assets/js/screens/checkins.js"></script>
+  <script src="assets/js/screens/memberships.js"></script>
+  <script src="assets/js/screens/payments.js"></script>
+  <script src="assets/js/screens/leads.js"></script>
+  <script src="assets/js/screens/followups.js"></script>
+  <script src="assets/js/screens/classes.js"></script>
+  <script src="assets/js/screens/staff.js"></script>
+  <script src="assets/js/screens/reports.js"></script>
+  <script src="assets/js/screens/messages.js"></script>
+  <script src="assets/js/screens/settings.js"></script>
+  <script src="assets/js/screens/member-app.js"></script>
+  <script src="assets/js/screens/login.js"></script>
+</body>
+</html>
