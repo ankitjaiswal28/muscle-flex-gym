@@ -13,16 +13,16 @@
     { title: 'Today', items: [
       { path: 'dashboard', label: 'Overview', icon: 'dashboard', keywords: 'home dashboard kpi' },
       { path: 'checkins', label: 'Check-ins', icon: 'scan', keywords: 'door qr kiosk security' },
-      { path: 'followups', label: 'Follow-ups', icon: 'phoneCall', keywords: 'calls tasks', badge: function () { return MF.counts.overdueFollowups; } }
+      { path: 'followups', label: 'Follow-ups', icon: 'phoneCall', keywords: 'calls tasks', badge: function () { return MF.followups.filter(function (f) { return !f.done && f.dueIn < 0; }).length; } }
     ] },
     { title: 'People', items: [
       { path: 'members', label: 'Members', icon: 'users', keywords: 'customers clients' },
-      { path: 'leads', label: 'Leads', icon: 'target', keywords: 'enquiries kanban pipeline', badge: function () { return MF.counts.newLeads; } },
+      { path: 'leads', label: 'Leads', icon: 'target', keywords: 'enquiries kanban pipeline', badge: function () { return MF.leads.filter(function (l) { return l.stage === 'New'; }).length; } },
       { path: 'classes', label: 'Classes & PT', icon: 'calendar', keywords: 'timetable bookings trainer' }
     ] },
     { title: 'Money', items: [
       { path: 'memberships', label: 'Memberships', icon: 'ticket', keywords: 'plans passes promo' },
-      { path: 'payments', label: 'Payments', icon: 'card', keywords: 'direct debit pos overdue', badge: function () { return MF.counts.failedPayments; } },
+      { path: 'payments', label: 'Payments', icon: 'card', keywords: 'direct debit pos overdue', badge: function () { return MF.payments.filter(function (p) { return p.status === 'Failed' || p.status === 'Retry'; }).length; } },
       { path: 'reports', label: 'Reports', icon: 'chart', keywords: 'revenue churn retention' }
     ] },
     { title: 'Engage', items: [
@@ -88,6 +88,7 @@
     var ui = App.ui, m = match(path);
 
     ui.closeAll();
+    ui.refreshBadges();
     renderToken++;               /* cancels any skeleton still waiting to paint */
     if (cleanup) { try { cleanup(); } catch (e) { /* ignore */ } cleanup = null; }
     view.innerHTML = '';

@@ -227,7 +227,9 @@
   }
   /* Row leaves: fade + slide, then the caller removes it */
   function listRemove(el, done) {
-    play(el, [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: 'translateX(12px)' }], { duration: DUR.exit + 30, easing: EASE_STATE, fill: 'forwards' }, done);
+    /* if the user has already left the screen, there is nothing to repaint */
+    play(el, [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: 'translateX(12px)' }], { duration: DUR.exit + 30, easing: EASE_STATE, fill: 'forwards' },
+      function () { if (done && document.contains(el)) done(); });
   }
 
   /* ---- kanban drag: lift with a slight tilt, settle on drop --------------- */

@@ -71,6 +71,7 @@
     root.appendChild(el);
     App.motion.toastIn(el);
     setTimeout(remove, 4200);
+    setTimeout(refreshBadges, 0);
     return el;
   }
 
@@ -552,6 +553,21 @@
     foot.innerHTML = '<div class="row" style="gap:var(--s-2)"><span class="' + dotCls + '"></span><strong>' + s.label + ' now</strong></div>' +
       '<span>' + s.detail + ' · Open 05:00–22:00</span>';
   }
+  /* Sidebar counts follow the data: clear a follow-up and the badge drops. */
+  function refreshBadges() {
+    if (!App.nav) return;
+    App.nav.forEach(function (g) {
+      g.items.forEach(function (it) {
+        if (!it.badge) return;
+        var link = document.querySelector('.nav__item[data-navkey="' + it.path + '"]');
+        if (!link) return;
+        var n = it.badge(), el = link.querySelector('.nav__badge');
+        if (!n) { if (el) el.parentNode.removeChild(el); return; }
+        if (!el) { el = document.createElement('span'); el.className = 'nav__badge'; link.appendChild(el); }
+        if (el.textContent !== String(n)) { el.textContent = n; el.setAttribute('aria-label', n + ' need attention'); }
+      });
+    });
+  }
   function setActiveNav(key) {
     var all = document.querySelectorAll('[data-navkey]');
     var tabKeys = TABS.map(function (t) { return t.path; });
@@ -695,6 +711,7 @@
     setAccent: setAccent,
     currentAccent: currentAccent,
     setActiveNav: setActiveNav,
+    refreshBadges: refreshBadges,
     refreshStatus: refreshStatus,
     pageHead: pageHead,
     state: state,
