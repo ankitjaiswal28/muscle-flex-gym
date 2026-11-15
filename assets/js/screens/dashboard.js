@@ -109,8 +109,8 @@
   function kpi(o) {
     return '<a class="card kpi" href="' + o.href + '" aria-label="' + esc(o.label + ': ' + o.text + '. ' + o.note) + '">' +
       '<div class="kpi__top"><span class="eyebrow">' + o.label + '</span>' + (o.delta || '') + '</div>' +
-      '<div class="kpi__mid"><p class="figure kpi__val"' + (o.id ? ' id="' + o.id + '"' : '') + ' data-count="' + o.value + '"' + (o.money ? ' data-format="money"' : '') + '>' + o.text + '</p>' + charts.sparkline(o.spark, 64, 26) + '</div>' +
-      '<p class="kpi__note faint truncate">' + o.note + '</p></a>';
+      '<div class="kpi__mid"><p class="figure kpi__val"' + (o.id ? ' id="' + o.id + '"' : '') + ' data-count="' + o.value + '"' + (o.money ? ' data-format="money"' : '') + '>' + o.text + '</p></div>' +
+      '<div class="kpi__foot"><p class="kpi__note faint truncate">' + o.note + '</p>' + charts.sparkline(o.spark, 56, 22) + '</div></a>';
   }
   function personRow(r) {
     var p = r.person;

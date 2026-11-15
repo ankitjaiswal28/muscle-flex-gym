@@ -167,7 +167,7 @@
     for (var t = 0; t <= 3; t++) {
       var v = lo + (hi - lo) * t / 3;
       out += '<line class="grid-line" x1="' + ml + '" x2="' + (w - mr) + '" y1="' + y(v) + '" y2="' + y(v) + '"/>' +
-        '<text class="axis" x="' + (ml - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + Math.round(v) + '</text>';
+        '<text class="axis" x="' + (ml - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + (hi - lo <= 6 ? Math.round(v * 10) / 10 : Math.round(v)) + '</text>';
     }
     labels.forEach(function (l, i) { out += '<text class="axis" x="' + x(i) + '" y="' + (h - 8) + '" text-anchor="middle">' + l + '</text>'; });
     out += '<clipPath id="' + id + '"><rect class="reveal" x="0" y="0" width="' + w + '" height="' + h + '"/></clipPath><g clip-path="url(#' + id + ')">';

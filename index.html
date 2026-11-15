@@ -8,7 +8,16 @@
   <script>
     /* Apply the saved theme before first paint (no flash). */
     (function () {
-      try { if (localStorage.getItem('mf-theme') === 'light') document.documentElement.setAttribute('data-theme', 'light'); } catch (e) {}
+      try {
+        if (localStorage.getItem('mf-theme') === 'light') document.documentElement.setAttribute('data-theme', 'light');
+        /* accent chosen in Settings → Appearance */
+        var a = localStorage.getItem('mf-accent');
+        if (a && /^#[0-9a-f]{6}$/i.test(a)) {
+          var n = parseInt(a.slice(1), 16), lum = (.2126 * (n >> 16 & 255) + .7152 * (n >> 8 & 255) + .0722 * (n & 255)) / 255;
+          document.documentElement.style.setProperty('--accent', a);
+          document.documentElement.style.setProperty('--on-accent', lum > .55 ? '#0B0B0C' : '#FFFFFF');
+        }
+      } catch (e) {}
     })();
   </script>
   <link rel="stylesheet" href="assets/css/tokens.css">

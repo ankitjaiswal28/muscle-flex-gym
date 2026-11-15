@@ -491,6 +491,22 @@
     document.dispatchEvent(new CustomEvent('mf:theme', { detail: next }));
   }
 
+  /* ------------------------------------------------------ accent colour -- */
+  /* One variable drives the brand colour. Text on it flips dark/white by
+     how light the colour is. null resets to the default from tokens.css. */
+  function setAccent(hex) {
+    var st = document.documentElement.style;
+    if (!hex) { st.removeProperty('--accent'); st.removeProperty('--on-accent'); try { localStorage.removeItem('mf-accent'); } catch (e) { /* fine */ } return; }
+    var n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    var lum = (.2126 * r + .7152 * g + .0722 * b) / 255;
+    st.setProperty('--accent', hex);
+    st.setProperty('--on-accent', lum > .55 ? '#0B0B0C' : '#FFFFFF');
+    try { localStorage.setItem('mf-accent', hex); } catch (e) { /* fine */ }
+  }
+  function currentAccent() {
+    return (document.documentElement.style.getPropertyValue('--accent') || getComputedStyle(document.documentElement).getPropertyValue('--brand-lime') || '').trim().toUpperCase();
+  }
+
   /* -------------------------------------------------------------- shell -- */
   var TABS = [
     { path: 'dashboard', label: 'Overview', icon: 'dashboard' },
@@ -671,6 +687,8 @@
     fillTemplate: fillTemplate,
     bestTimeToday: bestTimeToday,
     toggleTheme: toggleTheme,
+    setAccent: setAccent,
+    currentAccent: currentAccent,
     setActiveNav: setActiveNav,
     refreshStatus: refreshStatus,
     pageHead: pageHead,

@@ -543,6 +543,32 @@
     return classRoster[c.id];
   }
 
+  /* ---- reports: churn, cohorts, attendance (nothing after this uses rnd) -- */
+  var churn12 = revenue12.map(function (m, ix) {
+    return { label: m.label, value: Math.round((5.4 - ix * .17 + (rnd() - .5) * .7) * 10) / 10 };
+  });
+  var visits12 = revenue12.map(function (m, ix) {
+    return { label: m.label, value: Math.round((2.3 + ix * .07 + (rnd() - .5) * .25) * 10) / 10 };
+  });
+  var cohorts = [];
+  for (var co = 5; co >= 0; co--) {
+    var cd = new Date(NOW.getFullYear(), NOW.getMonth() - co, 1), kept = [100], left = 100;
+    for (var mo = 1; mo <= co; mo++) { left = Math.round(left * (.9 + rnd() * .07)); kept.push(left); }
+    cohorts.push({ label: MONTHS[cd.getMonth()] + ' ' + String(cd.getFullYear()).slice(2), size: int(8, 17), kept: kept });
+  }
+  var reports = {
+    churn: churn12, visits: visits12, cohorts: cohorts,
+    churnReasons: [['Not using it', 14], ['Moved away', 9], ['Price', 6], ['Switched gym', 5], ['Injury or illness', 4]]
+  };
+
+  /* ---- messages already sent -------------------------------------------- */
+  var broadcasts = [
+    { id: 'b1', channel: 'WhatsApp', segment: 'Expiring in 7 days', title: 'Renewal reminder', sent: 11, read: 91, date: isoIn(-1), time: '09:00' },
+    { id: 'b2', channel: 'WhatsApp', segment: 'All active members', title: 'Quietest hours this week', sent: 118, read: 84, date: isoIn(-3), time: '17:30' },
+    { id: 'b3', channel: 'SMS', segment: 'Failed payments', title: 'Payment didn\'t go through', sent: 5, read: 100, date: isoIn(-4), time: '10:15' },
+    { id: 'b4', channel: 'Email', segment: 'New joiners (30 days)', title: 'Your first month at Muscle Flex', sent: 9, read: 67, date: isoIn(-8), time: '08:00' }
+  ];
+
   /* ---- live door: someone scans in right now ----------------------------- */
   /* Shared by the dashboard feed and the check-ins screen. Pass a member to
      force who it is (the kiosk demo does), otherwise a random regular. */
@@ -591,6 +617,8 @@
     live: live,
     simulateCheckin: simulateCheckin,
     classAttendees: classAttendees,
+    reports: reports,
+    broadcasts: broadcasts,
     isoIn: isoIn,
     revenue: {
       months: revenue12,
