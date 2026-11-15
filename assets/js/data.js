@@ -59,7 +59,7 @@
       weekday: 'Mon–Fri 05:00–22:00 (staffed 10:00–22:00)',
       weekend: 'Sat–Sun 05:00–22:00 (staffed 08:00–14:00)'
     },
-    monthTarget: 14500
+    monthTarget: 580000
   };
 
   function status(d) {
@@ -79,13 +79,13 @@
 
   /* ---- plans ------------------------------------------------------------ */
   var plans = [
-    { id: 'monthly',  name: 'Monthly Rolling', price: 32,  period: 'month', kind: 'membership', blurb: 'No contract. Cancel any time.' },
-    { id: 'offpeak',  name: 'Off-Peak',        price: 24,  period: 'month', kind: 'membership', blurb: 'Train 10:00–16:00 and weekends.' },
-    { id: 'student',  name: 'Student',         price: 26,  period: 'month', kind: 'membership', blurb: 'Valid student ID. Same full access.' },
-    { id: 'couples',  name: 'Couples',         price: 56,  period: 'month', kind: 'membership', blurb: 'Two people, one Direct Debit.' },
-    { id: 'annual',   name: 'Annual',          price: 320, period: 'year',  kind: 'membership', blurb: 'Pay once. Two months free.' },
-    { id: 'week',     name: 'Week Pass',       price: 15,  period: '7 days', kind: 'pass', blurb: 'Seven days, full access.' },
-    { id: 'day',      name: 'Day Pass',        price: 7,   period: 'day',   kind: 'pass', blurb: 'Walk in. Train. Done.' }
+    { id: 'monthly',  name: 'Monthly Rolling', price: 2499, period: 'month', kind: 'membership', blurb: 'No contract. Cancel any time.' },
+    { id: 'offpeak',  name: 'Off-Peak',        price: 1799, period: 'month', kind: 'membership', blurb: 'Train 10:00–16:00 and weekends.' },
+    { id: 'student',  name: 'Student',         price: 1999, period: 'month', kind: 'membership', blurb: 'Valid student ID. Same full access.' },
+    { id: 'couples',  name: 'Couples',         price: 4499, period: 'month', kind: 'membership', blurb: 'Two people, one Direct Debit.' },
+    { id: 'annual',   name: 'Annual',          price: 24999, period: 'year',  kind: 'membership', blurb: 'Pay once. Two months free.' },
+    { id: 'week',     name: 'Week Pass',       price: 999, period: '7 days', kind: 'pass', blurb: 'Seven days, full access.' },
+    { id: 'day',      name: 'Day Pass',        price: 399, period: 'day',   kind: 'pass', blurb: 'Walk in. Train. Done.' }
   ];
   var planById = {};
   plans.forEach(function (p) { planById[p.id] = p; });
@@ -218,9 +218,19 @@
         time: hhmm(mins), mins: mins, memberId: m.id,
         method: weighted([['QR', 62], ['Fob', 28], ['Kiosk', 10]]),
         staffed: s.staffed,
-        flag: m.status === 'overdue' ? 'Payment overdue' : null
+        flag: m.status === 'overdue' ? 'Payment overdue' : null,
+        result: m.status === 'overdue' ? 'Flagged' : 'Granted'
       });
     }
+  });
+  /* a few door events that were NOT a clean entry — for the door log and security view */
+  var lapsed = members.filter(function (m) { return m.status === 'expired'; });
+  [[6 * 60 + 12, 'Flagged', 'Tailgating: two people, one scan'], [7 * 60 + 41, 'Denied', 'Membership expired'],
+    [17 * 60 + 26, 'Denied', 'Membership expired'], [20 * 60 + 8, 'Flagged', 'Door held open 40 seconds']].forEach(function (ev, n) {
+    if (ev[0] > nowMins) return;
+    var who = ev[1] === 'Denied' ? lapsed[n % lapsed.length] : pick(pool);
+    var sd = status(new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate(), Math.floor(ev[0] / 60), ev[0] % 60));
+    checkins.push({ time: hhmm(ev[0]), mins: ev[0], memberId: who.id, method: 'QR', staffed: sd.staffed, flag: ev[2], result: ev[1] });
   });
   checkins.sort(function (a, b) { return b.mins - a.mins; });
   seed = mainSeed;
@@ -229,19 +239,19 @@
 
   /* ---- revenue ---------------------------------------------------------- */
   var revenue12 = [];
-  var base = 9400;
+  var base = 376000;
   for (var mth = 11; mth >= 0; mth--) {
     var d = new Date(NOW.getFullYear(), NOW.getMonth() - mth, 1);
-    var seasonal = d.getMonth() === 0 ? 1500 : d.getMonth() === 1 ? 900 : d.getMonth() === 8 ? 600 : d.getMonth() === 11 ? -700 : 0;
-    var value = Math.round((base + (11 - mth) * 390 + seasonal + int(-350, 350)) / 10) * 10;
-    revenue12.push({ label: MONTHS[d.getMonth()], year: d.getFullYear(), revenue: value, target: Math.round((base + (11 - mth) * 420 + 300) / 100) * 100 });
+    var seasonal = d.getMonth() === 0 ? 60000 : d.getMonth() === 1 ? 36000 : d.getMonth() === 8 ? 24000 : d.getMonth() === 11 ? -28000 : 0;
+    var value = Math.round((base + (11 - mth) * 15600 + seasonal + int(-14000, 14000)) / 100) * 100;
+    revenue12.push({ label: MONTHS[d.getMonth()], year: d.getFullYear(), revenue: value, target: Math.round((base + (11 - mth) * 16800 + 12000) / 1000) * 1000 });
   }
   var dim = new Date(NOW.getFullYear(), NOW.getMonth() + 1, 0).getDate();
   var monthProgress = NOW.getDate() / dim;
-  var mtd = Math.round(gym.monthTarget * Math.min(1, monthProgress * 1.06 + .03) / 10) * 10;
+  var mtd = Math.round(gym.monthTarget * Math.min(1, monthProgress * 1.06 + .03) / 100) * 100;
   var cur = revenue12[11];
   cur.revenue = mtd; cur.target = gym.monthTarget; cur.partial = true;
-  var lastMonthSameDay = Math.round(revenue12[10].revenue * monthProgress / 10) * 10;
+  var lastMonthSameDay = Math.round(revenue12[10].revenue * monthProgress / 100) * 100;
 
   function spark(n, start, end, noise) {
     var out = [];
@@ -251,15 +261,15 @@
 
   /* ---- payments --------------------------------------------------------- */
   var products = [
-    { id: 'p1', name: 'Whey Protein 1kg', cat: 'Supplements', price: 28 },
-    { id: 'p2', name: 'Creatine 250g', cat: 'Supplements', price: 14 },
-    { id: 'p3', name: 'Pre-Workout Tub', cat: 'Supplements', price: 22 },
-    { id: 'p4', name: 'Protein Shake', cat: 'Drinks', price: 3.5 },
-    { id: 'p5', name: 'Energy Drink', cat: 'Drinks', price: 2.2 },
-    { id: 'p6', name: 'Water 750ml', cat: 'Drinks', price: 1.2 },
-    { id: 'p7', name: 'MF Stringer Vest', cat: 'Merch', price: 18 },
-    { id: 'p8', name: 'MF Hoodie', cat: 'Merch', price: 35 },
-    { id: 'p9', name: 'Lifting Straps', cat: 'Merch', price: 9 }
+    { id: 'p1', name: 'Whey Protein 1kg', cat: 'Supplements', price: 2799 },
+    { id: 'p2', name: 'Creatine 250g', cat: 'Supplements', price: 1199 },
+    { id: 'p3', name: 'Pre-Workout Tub', cat: 'Supplements', price: 1899 },
+    { id: 'p4', name: 'Protein Shake', cat: 'Drinks', price: 249 },
+    { id: 'p5', name: 'Energy Drink', cat: 'Drinks', price: 120 },
+    { id: 'p6', name: 'Water 750ml', cat: 'Drinks', price: 40 },
+    { id: 'p7', name: 'MF Stringer Vest', cat: 'Merch', price: 899 },
+    { id: 'p8', name: 'MF Hoodie', cat: 'Merch', price: 1999 },
+    { id: 'p9', name: 'Lifting Straps', cat: 'Merch', price: 499 }
   ];
   var payments = [];
   var payNo = 48210;
@@ -291,16 +301,16 @@
   var todayIso = iso(NOW);
   var revenueToday = payments.filter(function (p) { return p.date === todayIso && p.status === 'Paid'; })
     .reduce(function (s, p) { return s + p.amount; }, 0);
-  revenueToday = Math.round(revenueToday + 180 + nowMins / 6);   /* plus memberships collected today */
+  revenueToday = Math.round((revenueToday + 7500 + nowMins * 7) / 10) * 10;   /* plus memberships collected today */
   var overdueTotal = payments.filter(function (p) { return p.status === 'Failed' || p.status === 'Retry'; })
     .reduce(function (s, p) { return s + p.amount; }, 0);
 
   /* ---- staff & trainers ------------------------------------------------- */
   var staff = [
     { id: 's1', name: 'Adam', role: 'Owner', initials: 'AD', pt: false, phone: '07700 900001', shift: 'Flexible', ptRevenue: 0, commission: 0 },
-    { id: 's2', name: 'Dan Whitlock', role: 'Head Coach', initials: 'DW', pt: true, phone: '07700 900002', shift: 'Mon–Fri 10:00–18:00', ptRevenue: 2380, commission: 60, speciality: 'Powerlifting' },
-    { id: 's3', name: 'Carys Bowen', role: 'PT / Front Desk', initials: 'CB', pt: true, phone: '07700 900003', shift: 'Mon–Thu 14:00–22:00', ptRevenue: 1840, commission: 55, speciality: 'Fat loss, beginners' },
-    { id: 's4', name: 'Marcus Ofori', role: 'Personal Trainer', initials: 'MO', pt: true, phone: '07700 900004', shift: 'Tue–Sat 12:00–20:00', ptRevenue: 2120, commission: 55, speciality: 'Bodybuilding prep' },
+    { id: 's2', name: 'Dan Whitlock', role: 'Head Coach', initials: 'DW', pt: true, phone: '07700 900002', shift: 'Mon–Fri 10:00–18:00', ptRevenue: 95200, commission: 60, speciality: 'Powerlifting' },
+    { id: 's3', name: 'Carys Bowen', role: 'PT / Front Desk', initials: 'CB', pt: true, phone: '07700 900003', shift: 'Mon–Thu 14:00–22:00', ptRevenue: 73600, commission: 55, speciality: 'Fat loss, beginners' },
+    { id: 's4', name: 'Marcus Ofori', role: 'Personal Trainer', initials: 'MO', pt: true, phone: '07700 900004', shift: 'Tue–Sat 12:00–20:00', ptRevenue: 84800, commission: 55, speciality: 'Bodybuilding prep' },
     { id: 's5', name: 'Leah Stanton', role: 'Front Desk', initials: 'LS', pt: false, phone: '07700 900005', shift: 'Sat–Sun 08:00–14:00', ptRevenue: 0, commission: 0 },
     { id: 's6', name: 'Rhys Maddock', role: 'Front Desk / Sales', initials: 'RM', pt: false, phone: '07700 900006', shift: 'Fri 14:00–22:00, Mon 10:00–14:00', ptRevenue: 0, commission: 0 }
   ];
@@ -322,7 +332,7 @@
   var ptSessions = [];
   for (var ps = 0; ps < 14; ps++) {
     var tr = pick(trainers), cl = pick(pool);
-    ptSessions.push({ id: 'pt' + (ps + 1), day: int(0, 6), start: hhmm(pick([7, 8, 11, 13, 15, 16, 17, 20]) * 60), mins: 60, trainerId: tr.id, memberId: cl.id, price: 35, status: pick(['Booked', 'Booked', 'Booked', 'Completed']) });
+    ptSessions.push({ id: 'pt' + (ps + 1), day: int(0, 6), start: hhmm(pick([7, 8, 11, 13, 15, 16, 17, 20]) * 60), mins: 60, trainerId: tr.id, memberId: cl.id, price: 1200, status: pick(['Booked', 'Booked', 'Booked', 'Completed']) });
   }
 
   /* ---- leads ------------------------------------------------------------ */
@@ -338,7 +348,7 @@
       source: weighted([['Instagram', 34], ['Walk-in', 22], ['Google', 18], ['Referral', 16], ['Website', 10]]),
       interest: pick(INTEREST), created: isoIn(-created),
       lastContact: stage === 'New' ? null : isoIn(-int(0, Math.max(0, created - 1))),
-      owner: pick(['s3', 's5', 's6']), value: pick([24, 26, 32, 32, 56, 320]),
+      owner: pick(['s3', 's5', 's6']), value: pick([1799, 1999, 2499, 2499, 4499, 24999]),
       note: pick(['Wants to try before joining.', 'Training for a first comp.', 'Moving from a chain gym.', 'Asked about 05:00 access.', 'Friend already trains here.', 'Needs a beginner plan.'])
     });
   }
@@ -362,12 +372,12 @@
   var promos = [
     { code: 'NEWYEAR25', desc: '25% off first month', uses: 41, limit: 100, ends: isoIn(18), active: true },
     { code: 'BRINGAMATE', desc: 'Free week pass for a friend', uses: 23, limit: null, ends: null, active: true },
-    { code: 'STUDENT5', desc: '£5 off Student plan, first 3 months', uses: 17, limit: 50, ends: isoIn(46), active: true },
+    { code: 'STUDENT5', desc: '₹300 off Student plan, first 3 months', uses: 17, limit: 50, ends: isoIn(46), active: true },
     { code: 'SUMMERSHRED', desc: 'No joining fee', uses: 64, limit: 64, ends: isoIn(-30), active: false }
   ];
   var freezeRules = [
     'Freeze for 1–3 months, once every 12 months.',
-    '£5 per month holding fee while frozen.',
+    '₹300 per month holding fee while frozen.',
     'Medical freezes are free with a note.',
     'Unfreeze any time — access is back the same day.'
   ];
@@ -453,7 +463,7 @@
         if (pd > NOW) continue;
         var st = 'Paid';
         if (pays.length === 0) st = m.dd === 'Failed' || m.dd === 'Retry' || m.dd === 'Pending' ? m.dd : m.dd === 'Paused' ? 'Paused' : 'Paid';
-        pays.push({ id: 'PAY-' + (n++), memberId: id, type: 'Direct Debit', item: plan.name, amount: st === 'Paused' ? 5 : plan.price, status: st === 'Paused' ? 'Paid' : st, date: iso(pd), time: '06:' + pad(ri(0, 59)), method: 'Direct Debit', note: st === 'Paused' ? 'Freeze holding fee' : null });
+        pays.push({ id: 'PAY-' + (n++), memberId: id, type: 'Direct Debit', item: plan.name, amount: st === 'Paused' ? 300 : plan.price, status: st === 'Paused' ? 'Paid' : st, date: iso(pd), time: '06:' + pad(ri(0, 59)), method: 'Direct Debit', note: st === 'Paused' ? 'Freeze holding fee' : null });
       }
     }
     for (var q2 = ri(0, 3); q2 > 0; q2--) {
@@ -481,7 +491,7 @@
     if (m.pt) {
       var tr = rp(trainers), focus = ['Squat technique', 'Upper push', 'Deadlift + accessories', 'Conditioning', 'Programme review', 'Posing practice'];
       [-21, -14, -7, 3, 10, 17].forEach(function (off, ix) {
-        pt.push({ id: id + '-pt' + ix, date: isoIn(off), time: hhmm(favHour * 60), trainerId: tr.id, focus: focus[ix], price: 35, status: off < 0 ? 'Completed' : 'Booked' });
+        pt.push({ id: id + '-pt' + ix, date: isoIn(off), time: hhmm(favHour * 60), trainerId: tr.id, focus: focus[ix], price: 1200, status: off < 0 ? 'Completed' : 'Booked' });
       });
     }
 
@@ -512,6 +522,53 @@
     return detailCache[id];
   }
 
+  /* ---- staff rota: one [from, to] per day, Mon first; null = day off ----- */
+  var ROTA = {
+    s1: [null, [10, 16], null, [10, 16], null, null, null],
+    s2: [[10, 18], [10, 18], [10, 18], [10, 18], [10, 18], null, null],
+    s3: [[14, 22], [14, 22], [14, 22], null, null, null, null],
+    s4: [null, [12, 20], [12, 20], [12, 20], [12, 20], [12, 20], null],
+    s5: [null, null, null, null, null, [8, 14], [8, 14]],
+    s6: [[10, 14], null, null, null, [14, 22], null, null]
+  };
+  staff.forEach(function (st) { st.rota = ROTA[st.id] || [null, null, null, null, null, null, null]; });
+
+  /* who is booked on a class — always the same people for the same class */
+  var classRoster = {};
+  function classAttendees(c) {
+    if (!classRoster[c.id]) {
+      var off = (parseInt(c.id.slice(1), 10) * 7) % Math.max(1, pool.length - 24);
+      classRoster[c.id] = pool.slice(off, off + c.booked).map(function (m) { return m.id; });
+    }
+    return classRoster[c.id];
+  }
+
+  /* ---- live door: someone scans in right now ----------------------------- */
+  /* Shared by the dashboard feed and the check-ins screen. Pass a member to
+     force who it is (the kiosk demo does), otherwise a random regular. */
+  var live = { onFloor: onFloor, capacity: gym.capacity };
+  function simulateCheckin(who) {
+    var clock = new Date(NOW.getTime() + (Date.now() - loadedAt));
+    var recent = {};
+    checkins.slice(0, 12).forEach(function (c) { recent[c.memberId] = true; });
+    var cands = pool.filter(function (m) { return !recent[m.id] && m.status !== 'frozen' && m.status !== 'expired'; });
+    var m = who || cands[Math.floor(Math.random() * cands.length)] || pool[0];
+    var denied = m.status === 'expired' || m.status === 'frozen', owing = m.status === 'overdue';
+    var c = {
+      time: pad(clock.getHours()) + ':' + pad(clock.getMinutes()), mins: clock.getHours() * 60 + clock.getMinutes(), memberId: m.id,
+      method: who ? 'Kiosk' : Math.random() < .65 ? 'QR' : Math.random() < .8 ? 'Fob' : 'Kiosk', staffed: status(clock).staffed,
+      flag: m.status === 'expired' ? 'Membership expired' : m.status === 'frozen' ? 'Membership frozen' : owing ? 'Payment overdue' : null,
+      result: denied ? 'Denied' : owing ? 'Flagged' : 'Granted', fresh: true
+    };
+    checkins.unshift(c);
+    if (!denied) {
+      m.daysSinceVisit = 0; m.lastVisit = todayIso; m.totalVisits += 1;
+      live.onFloor = Math.min(live.capacity, live.onFloor + 1);
+      if (!who && Math.random() < .45 && live.onFloor > 8) live.onFloor -= Math.random() < .3 ? 2 : 1;   /* people leave too */
+    }
+    return c;
+  }
+
   /* ---- export ----------------------------------------------------------- */
   var loadedAt = Date.now();
   window.MF = {
@@ -531,7 +588,10 @@
     heatmap: heatmap,
     todayDow: todayDow,
     checkins: checkins,
-    live: { onFloor: onFloor, capacity: gym.capacity },
+    live: live,
+    simulateCheckin: simulateCheckin,
+    classAttendees: classAttendees,
+    isoIn: isoIn,
     revenue: {
       months: revenue12,
       today: revenueToday,

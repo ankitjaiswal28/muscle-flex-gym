@@ -65,17 +65,17 @@
 
         '<div class="grid pstats">' +
           '<section class="card"><p class="eyebrow">Plan</p><p class="pstat__big">' + esc(plan.name) + '</p>' +
-            '<p class="muted">' + fmt.gbp(plan.price) + ' / ' + plan.period + '</p><p style="margin-top:var(--s-3)">' + ui.chip(m.dd, m.dd === 'n/a' ? null : 'Direct Debit · ' + m.dd) + '</p></section>' +
+            '<p class="muted">' + fmt.money(plan.price) + ' / ' + plan.period + '</p><p style="margin-top:var(--s-3)">' + ui.chip(m.dd, m.dd === 'n/a' ? null : 'Direct Debit · ' + m.dd) + '</p></section>' +
 
           '<section class="card"><p class="eyebrow">' + (left < 0 ? 'Expired' : 'Expires') + '</p>' +
-            '<p class="pstat__big ' + (left < 0 ? 'accent-text' : left <= 7 ? 'warning-text' : '') + '"><span class="figure">' + Math.abs(left) + '</span> day' + (Math.abs(left) === 1 ? '' : 's') + (left < 0 ? ' ago' : ' left') + '</p>' +
+            '<p class="pstat__big ' + (left < 0 ? 'danger-text' : left <= 7 ? 'warning-text' : '') + '"><span class="figure">' + Math.abs(left) + '</span> day' + (Math.abs(left) === 1 ? '' : 's') + (left < 0 ? ' ago' : ' left') + '</p>' +
             '<p class="muted">' + fmt.date(m.expires) + '</p>' +
             '<span class="meter meter--lg' + (left <= 7 ? '' : ' meter--quiet') + '" role="img" aria-label="' + Math.round(used * 100) + '% of this period used"><i style="transform:scaleX(' + used + ')"></i></span></section>' +
 
           '<section class="card"><p class="eyebrow">Churn risk</p>' +
-            '<p class="pstat__big ' + (lvl === 'High' ? 'accent-text' : '') + '"><span class="figure" data-count="' + m.churnRisk + '">' + m.churnRisk + '</span>% · ' + lvl + '</p>' +
+            '<p class="pstat__big ' + (lvl === 'High' ? 'danger-text' : '') + '"><span class="figure" data-count="' + m.churnRisk + '">' + m.churnRisk + '</span>% · ' + lvl + '</p>' +
             '<ul class="reasons">' + riskReasons(m).map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul>' +
-            '<span class="meter meter--lg' + (lvl === 'High' ? '' : ' meter--quiet') + '" aria-hidden="true"><i style="transform:scaleX(' + m.churnRisk / 100 + ')"></i></span></section>' +
+            '<span class="meter meter--lg' + (lvl === 'High' ? ' meter--danger' : ' meter--quiet') + '" aria-hidden="true"><i style="transform:scaleX(' + m.churnRisk / 100 + ')"></i></span></section>' +
 
           '<section class="card qrcard"><div class="qrcard__code">' + charts.qr(m.id, 92) + '</div>' +
             '<div><p class="eyebrow">Door pass</p><p class="pstat__big">' + m.id + '</p><p class="muted">Scan at the door.</p>' +
@@ -115,12 +115,12 @@
         },
 
         payments: function () {
-          panel.innerHTML = '<div class="ppanel__bar"><p class="muted">' + fmt.gbp(d.paidTotal, true) + ' paid across ' + d.payments.length + ' payment' + (d.payments.length === 1 ? '' : 's') + '.</p>' +
+          panel.innerHTML = '<div class="ppanel__bar"><p class="muted">' + fmt.money(d.paidTotal, true) + ' paid across ' + d.payments.length + ' payment' + (d.payments.length === 1 ? '' : 's') + '.</p>' +
               '<button class="btn btn--sm" type="button" data-action="quick:payment">' + icon('plus', 'icon--sm') + 'Take payment</button></div>' +
             '<div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Item</th><th class="c-plan">Type</th><th>Status</th><th class="t-right">Amount</th><th class="t-acts"><span class="sr-only">Receipt</span></th></tr></thead><tbody>' +
             d.payments.map(function (p, i) {
               return '<tr data-pay="' + i + '" class="is-click"><td>' + fmt.date(p.date) + '</td><td>' + esc(p.item) + (p.note ? '<small class="faint">' + esc(p.note) + '</small>' : '') + '</td><td class="c-plan muted">' + p.type + '</td>' +
-                '<td>' + ui.chip(p.status) + '</td><td class="t-right"><strong>' + fmt.gbp(p.amount, true) + '</strong></td>' +
+                '<td>' + ui.chip(p.status) + '</td><td class="t-right"><strong>' + fmt.money(p.amount, true) + '</strong></td>' +
                 '<td class="t-acts"><button class="icon-btn" type="button" aria-label="Open receipt ' + p.id + '">' + icon('chevronRight') + '</button></td></tr>';
             }).join('') + '</tbody></table></div>';
         },
@@ -156,7 +156,7 @@
             '<ul class="alist">' + d.pt.slice().reverse().map(function (s) {
               return '<li class="arow"><span class="avatar avatar--icon">' + icon('dumbbell') + '</span><span class="grow"><strong>' + esc(s.focus) + '</strong>' +
                 '<small>' + fmt.date(s.date) + ' · ' + s.time + ' · 60 min with ' + esc(fmt.first(tr.name)) + '</small></span>' + ui.chip(s.status) +
-                '<strong class="nowrap">' + fmt.gbp(s.price) + '</strong>' +
+                '<strong class="nowrap">' + fmt.money(s.price) + '</strong>' +
                 (s.status === 'Booked' ? '<button class="btn btn--sm" type="button" data-toast="Reminder sent to ' + esc(first) + '.">Remind</button>' : '') + '</li>';
             }).join('') + '</ul>';
         },
@@ -257,7 +257,7 @@
           '<button class="menu-item" type="button" role="menuitem" data-toast="Cancellation needs ' + esc(first) + ' to confirm. Link sent." data-toast-type="warning">' + icon('x') + '<span class="grow">Cancel membership</span></button>', 'More actions');
         if (!pop) return;
         pop.querySelector('[data-more="freeze"]').addEventListener('click', function () {
-          ui.modal({ title: 'Freeze ' + first + '?', subtitle: 'Access pauses today. £5 a month holding fee. Unfreeze any time.',
+          ui.modal({ title: 'Freeze ' + first + '?', subtitle: 'Access pauses today. ₹300 a month holding fee. Unfreeze any time.',
             body: '<p class="muted">' + first + ' gets a WhatsApp confirming it.</p>',
             footer: '<button class="btn btn--ghost" type="button" data-close>Not now</button><button class="btn btn--primary" type="button" id="fz">Freeze</button>',
             onOpen: function (el, close) {

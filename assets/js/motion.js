@@ -90,14 +90,14 @@
     }
     requestAnimationFrame(tick);
   }
-  /* Count up every [data-count] inside root. data-format: gbp | num (default) */
+  /* Count up every [data-count] inside root. data-format: money | num (default) */
   function countAll(root) {
     var fmt = App.fmt, nodes = root.querySelectorAll('[data-count]');
     for (var i = 0; i < nodes.length; i++) {
       (function (el) {
         var v = parseFloat(el.getAttribute('data-count')) || 0;
-        var f = el.getAttribute('data-format') === 'gbp'
-          ? function (n) { return fmt.gbp(Math.round(n)); }
+        var f = el.getAttribute('data-format') === 'money'
+          ? function (n) { return fmt.money(Math.round(n)); }
           : function (n) { return fmt.num(Math.round(n)); };
         countUp(el, v, f);
       })(nodes[i]);
@@ -188,6 +188,7 @@
     var GROW = [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }];
     each(root, '.bars .bar', function (el, i) { anims.push(el.animate(GROW, { duration: 520, delay: 80 + i * 30, easing: EASE_OUT, fill: 'backwards' })); });
     each(root, '.strip .bar', function (el, i) { anims.push(el.animate(GROW, { duration: 420, delay: 120 + i * 16, easing: EASE_OUT, fill: 'backwards' })); });
+    each(root, '.hbars .hbar', function (el, i) { anims.push(el.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 520, delay: 80 + i * 50, easing: EASE_OUT, fill: 'backwards' })); });
     each(root, '.reveal', function (el) { anims.push(el.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 800, delay: 380, easing: EASE_STATE, fill: 'backwards' })); });
     each(root, '.donut', function (el) { anims.push(el.animate([{ transform: 'rotate(-50deg)' }, { transform: 'rotate(0deg)' }], { duration: 700, easing: EASE_OUT })); });
     each(root, '.donut__seg', function (el, i) { anims.push(el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, delay: 60 + i * 70, easing: 'linear', fill: 'backwards' })); });
@@ -214,6 +215,21 @@
     play(el, [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: 'translateX(12px)' }], { duration: DUR.exit + 30, easing: EASE_STATE, fill: 'forwards' }, done);
   }
 
+  /* ---- kanban drag: lift with a slight tilt, settle on drop --------------- */
+  /* The carried card is a fixed-position copy moved with transform only. */
+  var TILT = 3;
+  function dragLift(ghost) {
+    if (!can(ghost)) return;
+    ghost.animate([{ transform: 'translate3d(0,0,0) rotate(0deg) scale(1)' }, { transform: 'translate3d(0,0,0) rotate(' + TILT + 'deg) scale(1.03)' }], { duration: 140, easing: EASE_OUT });
+  }
+  function dragMove(ghost, dx, dy) {
+    ghost.style.transform = 'translate3d(' + dx + 'px,' + dy + 'px,0)' + (reduced() ? '' : ' rotate(' + TILT + 'deg) scale(1.03)');
+  }
+  function dragDrop(ghost, dx, dy, done) {
+    play(ghost, [{ transform: ghost.style.transform || 'none' }, { transform: 'translate3d(' + dx + 'px,' + dy + 'px,0) rotate(0deg) scale(1)' }],
+      { duration: 190, easing: EASE_OUT, fill: 'forwards' }, done);
+  }
+
   App.motion = {
     reduced: reduced,
     ease: { out: EASE_OUT, state: EASE_STATE },
@@ -232,6 +248,9 @@
     skeleton: skeleton,
     drawChart: drawChart,
     listInsert: listInsert,
-    listRemove: listRemove
+    listRemove: listRemove,
+    dragLift: dragLift,
+    dragMove: dragMove,
+    dragDrop: dragDrop
   };
 })();

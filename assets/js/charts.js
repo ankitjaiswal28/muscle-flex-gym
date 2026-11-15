@@ -35,16 +35,19 @@
   /* items: [{label, value, target, tip, now}] */
   function bars(items, w, h, o) {
     o = o || {};
-    var ml = 40, mr = 8, mt = 14, mb = 26, iw = w - ml - mr, ih = h - mt - mb;
-    var top = Math.max.apply(null, items.map(function (d) { return Math.max(d.value, d.target || 0); }));
-    var step = top > 12000 ? 4000 : top > 6000 ? 3000 : 2000;
+    var ml = 46, mr = 8, mt = 14, mb = 26, iw = w - ml - mr, ih = h - mt - mb;
+    var top = Math.max(1, Math.max.apply(null, items.map(function (d) { return Math.max(d.value, d.target || 0); })));
+    /* a "nice" step that gives 3–5 gridlines at any scale (counts or rupees) */
+    var raw = top * 1.06 / 4, mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10)), nrm = raw / mag;
+    var step = (nrm <= 1 ? 1 : nrm <= 2 ? 2 : nrm <= 5 ? 5 : 10) * mag;
     var max = Math.ceil(top * 1.06 / step) * step;
+    var tick = o.tick || function (v) { return v === 0 ? '0' : App.fmt.moneyShort(v); };
     var band = iw / items.length, bw = Math.max(6, Math.min(34, band * .56));
     function y(v) { return r1(mt + ih - v / max * ih); }
     var out = svgOpen(w, h, o.label, 'bars');
     for (var t = 0; t <= max; t += step) {
       out += '<line class="grid-line" x1="' + ml + '" x2="' + (w - mr) + '" y1="' + y(t) + '" y2="' + y(t) + '"/>' +
-        '<text class="axis" x="' + (ml - 8) + '" y="' + (y(t) + 4) + '" text-anchor="end">' + (t === 0 ? '0' : '£' + t / 1000 + 'k') + '</text>';
+        '<text class="axis" x="' + (ml - 8) + '" y="' + (y(t) + 4) + '" text-anchor="end">' + tick(t) + '</text>';
     }
     var skip = band < 30 ? 2 : 1, line = [];
     items.forEach(function (d, i) {
@@ -216,6 +219,23 @@
     return out + '</svg>';
   }
 
+  /* ---- horizontal bars: label · bar · value ------------------------------- */
+  /* items: [{label, value, text, cls, tip}] */
+  function hbars(items, w, o) {
+    o = o || {};
+    var lw = Math.min(150, Math.max(96, w * .3)), vw = o.valueWidth || 132, rowH = 34, bh = 12;
+    var bx = lw + 8, bwMax = Math.max(40, w - bx - vw - 8), max = Math.max.apply(null, items.map(function (d) { return d.value; })) || 1;
+    var out = svgOpen(w, items.length * rowH, o.label, 'hbars');
+    items.forEach(function (d, i) {
+      var y = i * rowH, len = Math.max(3, d.value / max * bwMax);
+      out += '<text class="axis axis--label" x="0" y="' + (y + rowH / 2 + 4) + '">' + esc(d.label) + '</text>' +
+        '<rect class="hbar__track" x="' + r1(bx) + '" y="' + r1(y + (rowH - bh) / 2) + '" width="' + r1(bwMax) + '" height="' + bh + '" rx="6"/>' +
+        '<rect class="hbar ' + (d.cls || '') + '" x="' + r1(bx) + '" y="' + r1(y + (rowH - bh) / 2) + '" width="' + r1(len) + '" height="' + bh + '" rx="6" data-tip="' + esc(d.tip || '') + '"/>' +
+        '<text class="axis axis--value" x="' + w + '" y="' + (y + rowH / 2 + 4) + '" text-anchor="end">' + esc(d.text || d.value) + '</text>';
+    });
+    return out + '</svg>';
+  }
+
   /* ---- shared tooltip ----------------------------------------------------- */
   var tip = null;
   function showTip(target) {
@@ -253,6 +273,7 @@
     heatmap: heatmap,
     strip: strip,
     line: line,
+    hbars: hbars,
     calendar: calendar,
     qr: qr,
     hideTip: hideTip

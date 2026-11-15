@@ -28,11 +28,20 @@
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
       });
     },
-    gbp: function (n, pence) {
-      var opts = pence || n % 1 !== 0 ? { minimumFractionDigits: 2, maximumFractionDigits: 2 } : { maximumFractionDigits: 0 };
-      return '£' + Number(n).toLocaleString('en-GB', opts);
+    /* Indian Rupees, Indian digit grouping (₹3,76,000). Paise only if present. */
+    money: function (n) {
+      n = Number(n);
+      var opts = n % 1 !== 0 ? { minimumFractionDigits: 2, maximumFractionDigits: 2 } : { maximumFractionDigits: 0 };
+      return '₹' + n.toLocaleString('en-IN', opts);
     },
-    num: function (n) { return Number(n).toLocaleString('en-GB'); },
+    /* short form for chart axes and tight spots: ₹4.2L, ₹85k */
+    moneyShort: function (n) {
+      n = Number(n);
+      if (n >= 100000) return '₹' + (Math.round(n / 10000) / 10) + 'L';
+      if (n >= 1000) return '₹' + (Math.round(n / 100) / 10) + 'k';
+      return '₹' + Math.round(n);
+    },
+    num: function (n) { return Number(n).toLocaleString('en-IN'); },
     date: function (d) { d = toDate(d); return pad(d.getDate()) + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear(); },
     dateShort: function (d) { d = toDate(d); return pad(d.getDate()) + ' ' + MONTHS[d.getMonth()]; },
     time: function (d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); },
@@ -149,7 +158,9 @@
     active: ['success', 'Active'], expiring: ['warning', 'Expiring'], overdue: ['danger', 'Overdue'], frozen: ['', 'Frozen'], expired: ['', 'Expired'],
     Paid: ['success', 'Paid'], Pending: ['warning', 'Pending'], Failed: ['danger', 'Failed'], Retry: ['warning', 'Retry'],
     Paused: ['', 'Paused'], Cancelled: ['', 'Cancelled'], 'n/a': ['', 'No Direct Debit'],
-    Booked: ['warning', 'Booked'], Completed: ['success', 'Completed']
+    Booked: ['warning', 'Booked'], Completed: ['success', 'Completed'],
+    Granted: ['success', 'Granted'], Flagged: ['warning', 'Flagged'], Denied: ['danger', 'Denied'],
+    Staffed: ['', 'Staffed'], Unstaffed: ['warning', 'Unstaffed']
   };
   function chip(key, label) {
     var s = STATUS[key] || ['', key];
@@ -159,6 +170,28 @@
   function agoText(days) { return days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : days + ' days ago'; }
   function inText(days) { return days === 0 ? 'today' : days === 1 ? 'tomorrow' : days > 0 ? 'in ' + days + ' days' : days === -1 ? 'yesterday' : -days + ' days ago'; }
 
+  /* -------------------------------------------- pager + switch + pill -- */
+  /* Buttons carry data-page; the screen listens on its own container. */
+  function pager(total, page, per, noun) {
+    var pages = Math.max(1, Math.ceil(total / per)), from = total ? (page - 1) * per + 1 : 0, to = Math.min(total, page * per), nums = '', gap = false;
+    for (var p = 1; p <= pages; p++) {
+      if (pages > 7 && p > 2 && p < pages - 1 && Math.abs(p - page) > 1) { if (!gap) { nums += '<span class="pager__gap">…</span>'; gap = true; } continue; }
+      gap = false;
+      nums += '<button class="pager__n" type="button" data-page="' + p + '"' + (p === page ? ' aria-current="page"' : '') + '>' + p + '</button>';
+    }
+    return '<span class="faint">' + (total ? from + '–' + to + ' of ' + total : 'No ' + (noun || 'results')) + '</span>' +
+      '<div class="pager__ctl"><button class="btn btn--sm" type="button" data-page="' + (page - 1) + '"' + (page <= 1 ? ' disabled' : '') + '>Previous</button>' +
+      '<span class="pager__nums">' + nums + '</span>' +
+      '<button class="btn btn--sm" type="button" data-page="' + (page + 1) + '"' + (page >= pages ? ' disabled' : '') + '>Next</button></div>';
+  }
+  function switchHtml(on, label, attrs) {
+    return '<button class="switch" type="button" role="switch" aria-checked="' + !!on + '" aria-label="' + fmt.esc(label) + '" ' + (attrs || '') + '><span class="switch__dot"></span></button>';
+  }
+  function refreshLiveCount() {
+    var el = document.getElementById('live-count');
+    if (el) el.textContent = MF.live.onFloor;
+  }
+
   /* ---------------------------------------------------- receipt drawer -- */
   function receipt(p) {
     var m = p.memberId ? MF.memberById[p.memberId] : null, who = m ? m.name : (p.guest || 'Guest');
@@ -166,7 +199,7 @@
     drawer({
       title: 'Receipt', subtitle: p.id,
       body: '<div class="receipt"><div class="receipt__top"><span class="brand__mark" aria-hidden="true">MF</span><div><strong>' + fmt.esc(MF.gym.name) + '</strong><span>' + fmt.esc(MF.gym.address) + '</span></div></div>' +
-        '<p class="figure receipt__total">' + fmt.gbp(p.amount, true) + '</p><p class="receipt__status">' + chip(p.status) + '</p>' +
+        '<p class="figure receipt__total">' + fmt.money(p.amount, true) + '</p><p class="receipt__status">' + chip(p.status) + '</p>' +
         '<dl class="receipt__rows">' +
         '<div><dt>Customer</dt><dd>' + fmt.esc(who) + (m ? ' · ' + m.id : '') + '</dd></div>' +
         '<div><dt>Item</dt><dd>' + fmt.esc(p.item) + (p.note ? ' · ' + fmt.esc(p.note) : '') + '</dd></div>' +
@@ -194,7 +227,7 @@
     var map = {
       first: fmt.first(p.name), plan: plan ? plan.name : 'membership',
       expiry: p.expires ? fmt.date(p.expires) : 'soon', besttime: bestTimeToday(),
-      amount: plan ? fmt.gbp(plan.price) : '', link: 'mflex.example/pay'
+      amount: plan ? fmt.money(plan.price) : '', link: 'mflex.example/pay'
     };
     if (extra) Object.keys(extra).forEach(function (k) { map[k] = extra[k]; });
     return (t ? t.body : 'Hi {first}, ').replace(/\{(\w+)\}/g, function (m, k) { return map[k] != null ? map[k] : m; });
@@ -221,7 +254,7 @@
 
   /* -------------------------------------------------- quick-action forms -- */
   function planOptions() {
-    return MF.plans.map(function (p) { return p.name + ' — ' + fmt.gbp(p.price) + ' / ' + p.period; });
+    return MF.plans.map(function (p) { return p.name + ' — ' + fmt.money(p.price) + ' / ' + p.period; });
   }
   var QUICK = {
     member: {
@@ -231,7 +264,7 @@
     },
     payment: {
       title: 'Take payment', subtitle: 'Card, contactless or cash at the desk.', icon: 'card', hint: 'POS sale or top-up',
-      fields: [['Member or guest', 'text', 'Name or member ID'], ['Item', 'select', function () { return MF.products.map(function (p) { return p.name + ' — ' + fmt.gbp(p.price, true); }); }], ['Method', 'select', ['Card', 'Contactless', 'Cash']]],
+      fields: [['Member or guest', 'text', 'Name or member ID'], ['Item', 'select', function () { return MF.products.map(function (p) { return p.name + ' — ' + fmt.money(p.price, true); }); }], ['Method', 'select', ['Card', 'Contactless', 'Cash']]],
       cta: 'Take payment', done: 'Payment taken. Receipt sent.'
     },
     checkin: {
@@ -628,6 +661,9 @@
     quick: quick,
     whatsapp: whatsapp,
     receipt: receipt,
+    pager: pager,
+    switchHtml: switchHtml,
+    refreshLiveCount: refreshLiveCount,
     chip: chip,
     riskLevel: riskLevel,
     agoText: agoText,

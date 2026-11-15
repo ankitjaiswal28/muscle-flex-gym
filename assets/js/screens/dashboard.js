@@ -66,7 +66,7 @@
         return MF.members.filter(function (m) { return m.dd === 'Failed' || m.dd === 'Retry'; })
           .map(function (m) {
             return { key: 'f' + m.id, person: m, href: '#/members/' + m.id, risk: m.churnRisk,
-              line: fmt.gbp(MF.planById[m.plan].price) + ' Direct Debit ' + (m.dd === 'Retry' ? 'on retry' : 'failed'),
+              line: fmt.money(MF.planById[m.plan].price) + ' Direct Debit ' + (m.dd === 'Retry' ? 'on retry' : 'failed'),
               tpl: 't4', cta: 'Retry', done: 'Retry queued for ' + fmt.first(m.name) + '. You\'ll hear how it lands.' };
           });
       }
@@ -109,7 +109,7 @@
   function kpi(o) {
     return '<a class="card kpi" href="' + o.href + '" aria-label="' + esc(o.label + ': ' + o.text + '. ' + o.note) + '">' +
       '<div class="kpi__top"><span class="eyebrow">' + o.label + '</span>' + (o.delta || '') + '</div>' +
-      '<div class="kpi__mid"><p class="figure kpi__val"' + (o.id ? ' id="' + o.id + '"' : '') + ' data-count="' + o.value + '"' + (o.gbp ? ' data-format="gbp"' : '') + '>' + o.text + '</p>' + charts.sparkline(o.spark, 64, 26) + '</div>' +
+      '<div class="kpi__mid"><p class="figure kpi__val"' + (o.id ? ' id="' + o.id + '"' : '') + ' data-count="' + o.value + '"' + (o.money ? ' data-format="money"' : '') + '>' + o.text + '</p>' + charts.sparkline(o.spark, 64, 26) + '</div>' +
       '<p class="kpi__note faint truncate">' + o.note + '</p></a>';
   }
   function personRow(r) {
@@ -144,7 +144,7 @@
     return '<li class="frow"><span class="avatar avatar--sm">' + esc(m.initials) + '</span>' +
       '<a class="grow" href="#/members/' + m.id + '"><strong class="truncate">' + esc(m.name) + '</strong>' +
       '<small class="truncate">' + c.method + ' · ' + esc(MF.planById[m.plan].name) + (c.staffed ? '' : ' · unstaffed') + '</small></a>' +
-      (c.flag ? '<span class="chip chip--danger">' + c.flag + '</span>' : '') +
+      (c.flag ? '<span class="chip chip--' + (c.result === 'Denied' ? 'danger' : 'warning') + '">' + c.flag + '</span>' : '') +
       '<time class="faint">' + c.time + '</time></li>';
   }
 
@@ -196,12 +196,12 @@
 
         /* KPI row */
         '<div class="grid kpis">' +
-          kpi({ label: 'Today', value: rev.today, text: fmt.gbp(rev.today), gbp: true, href: '#/payments', note: 'revenue · vs last ' + DAYS[MF.todayDow], spark: rev.spark.today, delta: delta(9, true) }) +
-          kpi({ label: 'This month', value: rev.mtd, text: fmt.gbp(rev.mtd), gbp: true, href: '#/reports', note: 'revenue · vs last month', spark: rev.spark.month, delta: delta(pct(rev.mtd, rev.lastMonthSameDay), true) }) +
+          kpi({ label: 'Today', value: rev.today, text: fmt.money(rev.today), money: true, href: '#/payments', note: 'revenue · vs last ' + DAYS[MF.todayDow], spark: rev.spark.today, delta: delta(9, true) }) +
+          kpi({ label: 'This month', value: rev.mtd, text: fmt.money(rev.mtd), money: true, href: '#/reports', note: 'revenue · vs last month', spark: rev.spark.month, delta: delta(pct(rev.mtd, rev.lastMonthSameDay), true) }) +
           kpi({ label: 'Active members', value: totalActive, text: fmt.num(totalActive), href: '#/members', note: 'net up this month', spark: rev.spark.members, delta: delta(MF.newJoins30, true, '') }) +
           kpi({ label: 'On the floor', id: 'kpi-floor', value: MF.live.onFloor, text: String(MF.live.onFloor), href: '#/checkins', note: 'of ' + MF.live.capacity + ' capacity', spark: rev.spark.floor }) +
           kpi({ label: 'New joins', value: MF.newJoins30, text: String(MF.newJoins30), href: '#/members', note: 'last 30 days', spark: rev.spark.joins, delta: delta(25, true) }) +
-          kpi({ label: 'Overdue', value: rev.overdue, text: fmt.gbp(rev.overdue), gbp: true, href: '#/payments', note: MF.counts.failedPayments + ' failed payments', spark: rev.spark.overdue, delta: delta(-18, false) }) +
+          kpi({ label: 'Overdue', value: rev.overdue, text: fmt.money(rev.overdue), money: true, href: '#/payments', note: MF.counts.failedPayments + ' failed payments', spark: rev.spark.overdue, delta: delta(-18, false) }) +
         '</div>' +
 
         '<div class="dash">' +
@@ -224,7 +224,7 @@
         '<section class="card span-8" aria-labelledby="h-rev">' +
           '<div class="card__head"><div><h2 id="h-rev">Revenue</h2><p>Last 12 months against target</p></div>' +
             '<div class="legend"><span><i class="lg lg--bar"></i>Revenue</span><span><i class="lg lg--now"></i>This month so far</span><span><i class="lg lg--line"></i>Target</span></div></div>' +
-          '<div class="row row--wrap" style="gap:var(--s-2) var(--s-4);margin-bottom:var(--s-3)"><span class="figure" style="font-size:var(--fs-32)">' + fmt.gbp(rev.mtd) + '</span>' +
+          '<div class="row row--wrap" style="gap:var(--s-2) var(--s-4);margin-bottom:var(--s-3)"><span class="figure" style="font-size:var(--fs-32)">' + fmt.money(rev.mtd) + '</span>' +
             '<span class="muted">this month so far</span>' + delta(pct(rev.mtd, rev.lastMonthSameDay), true) + '<span class="faint">vs same day last month</span></div>' +
           '<div id="rev-chart" class="chartbox" style="height:304px"></div>' +
         '</section>' +
@@ -257,9 +257,9 @@
         '<section class="card span-4" aria-labelledby="h-target">' +
           '<div class="card__head"><div><h2 id="h-target">Monthly target</h2><p>' + daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + ' left this month</p></div>' +
             '<span class="chip ' + (ahead ? 'chip--success' : 'chip--warning') + '">' + (ahead ? 'On pace' : 'Behind pace') + '</span></div>' +
-          '<div class="ringbox"><div id="ring"></div><div class="ringbox__val"><span class="figure"><span data-count="' + Math.round(rev.mtd / rev.target * 100) + '">' + Math.round(rev.mtd / rev.target * 100) + '</span>%</span><span class="faint">of ' + fmt.gbp(rev.target) + '</span></div></div>' +
-          '<dl class="stats"><div><dt>Collected</dt><dd>' + fmt.gbp(rev.mtd) + '</dd></div><div><dt>To go</dt><dd>' + fmt.gbp(toGo) + '</dd></div>' +
-            '<div><dt>Needed per day</dt><dd>' + (daysLeft ? fmt.gbp(Math.ceil(toGo / daysLeft)) : '—') + '</dd></div><div><dt>On pace for</dt><dd>' + fmt.gbp(pace) + '</dd></div></dl>' +
+          '<div class="ringbox"><div id="ring"></div><div class="ringbox__val"><span class="figure"><span data-count="' + Math.round(rev.mtd / rev.target * 100) + '">' + Math.round(rev.mtd / rev.target * 100) + '</span>%</span><span class="faint">of ' + fmt.money(rev.target) + '</span></div></div>' +
+          '<dl class="stats"><div><dt>Collected</dt><dd>' + fmt.money(rev.mtd) + '</dd></div><div><dt>To go</dt><dd>' + fmt.money(toGo) + '</dd></div>' +
+            '<div><dt>Needed per day</dt><dd>' + (daysLeft ? fmt.money(Math.ceil(toGo / daysLeft)) : '—') + '</dd></div><div><dt>On pace for</dt><dd>' + fmt.money(pace) + '</dd></div></dl>' +
         '</section>' +
 
         /* Membership mix */
@@ -277,7 +277,7 @@
           '<ul class="alist alist--tight" id="churn">' + watch.map(function (m) {
             return '<li class="arow" data-id="' + m.id + '"><a class="arow__main" href="#/members/' + m.id + '"><span class="avatar">' + esc(m.initials) + '</span>' +
               '<span class="grow"><strong class="truncate">' + esc(m.name) + '</strong><small class="truncate">' + esc(churnReason(m)) + '</small>' +
-              '<span class="meter" aria-hidden="true"><i style="transform:scaleX(' + m.churnRisk / 100 + ')"></i></span></span></a>' +
+              '<span class="meter meter--danger" aria-hidden="true"><i style="transform:scaleX(' + m.churnRisk / 100 + ')"></i></span></span></a>' +
               '<span class="risk risk--high">' + m.churnRisk + '%<small>risk</small></span>' +
               '<button class="icon-btn" type="button" data-act="wa" aria-label="WhatsApp ' + esc(m.name) + '" data-tip="WhatsApp">' + icon('message') + '</button></li>';
           }).join('') + '</ul>' +
@@ -299,13 +299,13 @@
       /* ------------------------------------------------------- charts ---- */
       var revItems = rev.months.map(function (m) {
         return { label: m.label, value: m.revenue, target: m.target, now: !!m.partial,
-          tip: m.label + ' ' + m.year + ' · ' + fmt.gbp(m.revenue) + (m.partial ? ' so far' : '') + ' · target ' + fmt.gbp(m.target) };
+          tip: m.label + ' ' + m.year + ' · ' + fmt.money(m.revenue) + (m.partial ? ' so far' : '') + ' · target ' + fmt.money(m.target) };
       });
       function el(id) { return view.querySelector('#' + id); }
       function drawCharts(animate) {
         var revBox = el('rev-chart'), heatBox = el('heat'), stripBox = el('strip'), gaugeBox = el('gauge');
         if (!revBox) return;
-        revBox.innerHTML = charts.bars(revItems, Math.max(260, revBox.clientWidth), 304, { label: 'Revenue for the last 12 months against target. This month so far ' + fmt.gbp(rev.mtd) + ' of ' + fmt.gbp(rev.target) + '.' });
+        revBox.innerHTML = charts.bars(revItems, Math.max(260, revBox.clientWidth), 304, { label: 'Revenue for the last 12 months against target. This month so far ' + fmt.money(rev.mtd) + ' of ' + fmt.money(rev.target) + '.' });
         heatBox.innerHTML = charts.heatmap(MF.heatmap, Math.max(260, heatBox.clientWidth), { days: DAYS, hours: MF.hours, todayIx: MF.todayDow, nowHour: MF.now.getHours(), capacity: MF.live.capacity,
           label: 'Busy hours by day and hour. Peak is ' + DAY_LONG[peak.d] + ' at ' + peak.h + ':00.' });
         stripBox.innerHTML = charts.strip(MF.heatmap[MF.todayDow], MF.hours, Math.max(200, stripBox.clientWidth), 64, { nowHour: MF.now.getHours(), bestHour: best, label: 'How busy today is, hour by hour.' });
@@ -417,20 +417,10 @@
       }
       function tick() {
         if (!document.hidden && MF.status(MF.now).open) {
-          var recent = {};
-          MF.checkins.slice(0, 12).forEach(function (c) { recent[c.memberId] = true; });
-          var cands = pool.filter(function (m) { return !recent[m.id]; });
-          var m = cands[Math.floor(Math.random() * cands.length)];
-          var clock = MF.clock(), st = MF.status(clock);
-          var c = { time: fmt.time(clock), mins: clock.getHours() * 60 + clock.getMinutes(), memberId: m.id,
-            method: Math.random() < .65 ? 'QR' : Math.random() < .8 ? 'Fob' : 'Kiosk', staffed: st.staffed,
-            flag: m.status === 'overdue' ? 'Payment overdue' : null };
-          MF.checkins.unshift(c);
+          var c = MF.simulateCheckin();
           feed.insertAdjacentHTML('afterbegin', feedRow(c));
           motion.listInsert(feed.firstElementChild);
           while (feed.children.length > 7) feed.removeChild(feed.lastElementChild);
-          MF.live.onFloor = Math.min(MF.live.capacity, MF.live.onFloor + 1);
-          if (Math.random() < .45 && MF.live.onFloor > 8) MF.live.onFloor -= Math.random() < .3 ? 2 : 1;   /* people leave too */
           updateFloor();
         }
         timer = setTimeout(tick, 5000 + Math.random() * 5000);

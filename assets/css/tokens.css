@@ -22,7 +22,9 @@
   --chalk-200: #DFDFDB;
 
   /* Brand + status raw values */
-  --brand-red:  #E10600;
+  --brand-lime: #D2FF3F;
+  --red-400:    #FF5A4F;
+  --red-700:    #C8281B;
   --green-400:  #34C77B;
   --green-700:  #15803D;
   --amber-400:  #F5A524;
@@ -90,8 +92,9 @@
 :root {
   color-scheme: dark;
 
-  --accent: var(--brand-red);              /* THE brand colour. Swap here only. */
-  --on-accent: #FFFFFF;
+  --accent: var(--brand-lime);             /* THE brand colour. Swap here only. */
+  --on-accent: #0B0B0C;                    /* text on the accent (dark, because lime is light) */
+  --accent-mark: var(--accent);            /* chart marks, progress bars, indicators */
 
   --bg: var(--iron-950);
   --surface: var(--iron-850);
@@ -108,12 +111,15 @@
 
   --success: var(--green-400);
   --warning: var(--amber-400);
-  --danger: var(--accent);
+  --danger: var(--red-400);                /* its own colour: lime cannot mean "failed" */
+  --danger-text: color-mix(in srgb, var(--danger) 82%, white);
+  --danger-soft: color-mix(in srgb, var(--danger) 15%, transparent);
+  --danger-line: color-mix(in srgb, var(--danger) 42%, transparent);
 
   /* Accent family, all derived */
   --accent-hover: color-mix(in srgb, var(--accent) 86%, white);
   --accent-press: color-mix(in srgb, var(--accent) 86%, black);
-  --accent-text: color-mix(in srgb, var(--accent) 62%, white);   /* AA on dark surfaces */
+  --accent-text: color-mix(in srgb, var(--accent) 74%, white);   /* AA on dark surfaces for any accent */
   --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
   --accent-line: color-mix(in srgb, var(--accent) 38%, transparent);
   --accent-glow: color-mix(in srgb, var(--accent) 28%, transparent);
@@ -155,10 +161,17 @@
 
   --accent-hover: color-mix(in srgb, var(--accent) 88%, black);
   --accent-press: color-mix(in srgb, var(--accent) 76%, black);
-  --accent-text: color-mix(in srgb, var(--accent) 88%, black);
-  --accent-soft: color-mix(in srgb, var(--accent) 9%, transparent);
-  --accent-line: color-mix(in srgb, var(--accent) 34%, transparent);
-  --accent-glow: color-mix(in srgb, var(--accent) 18%, transparent);
+  /* a light accent such as lime vanishes on white, so text and marks use a darker cut of it */
+  --accent-text: color-mix(in srgb, var(--accent) 38%, black);
+  --accent-mark: color-mix(in srgb, var(--accent) 64%, black);
+  --accent-soft: color-mix(in srgb, var(--accent) 26%, transparent);
+  --accent-line: color-mix(in srgb, var(--accent-mark) 55%, transparent);
+  --accent-glow: color-mix(in srgb, var(--accent-mark) 22%, transparent);
+
+  --danger: var(--red-700);
+  --danger-text: var(--red-700);
+  --danger-soft: color-mix(in srgb, var(--danger) 10%, transparent);
+  --danger-line: color-mix(in srgb, var(--danger) 36%, transparent);
 
   --success-soft: color-mix(in srgb, var(--success) 11%, transparent);
   --warning-soft: color-mix(in srgb, var(--warning) 12%, transparent);

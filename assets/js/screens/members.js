@@ -47,11 +47,11 @@
       '<td><a class="who" href="#/members/' + m.id + '"><span class="avatar avatar--sm">' + esc(m.initials) + '</span><span><strong>' + esc(m.name) + '</strong><small>' + m.id + '</small></span></a></td>' +
       '<td class="c-plan">' + esc(MF.planById[m.plan].name) + '</td>' +
       '<td>' + ui.chip(m.status) + '</td>' +
-      '<td class="c-exp">' + fmt.dateShort(m.expires) + '<small class="' + (d < 0 ? 'accent-text' : d <= 7 ? 'warning-text' : 'faint') + '">' + ui.inText(d) + '</small></td>' +
+      '<td class="c-exp">' + fmt.dateShort(m.expires) + '<small class="' + (d < 0 ? 'danger-text' : d <= 7 ? 'warning-text' : 'faint') + '">' + ui.inText(d) + '</small></td>' +
       '<td class="c-last">' + ui.agoText(m.daysSinceVisit) + '</td>' +
       '<td class="c-vis t-right">' + m.visits30 + '</td>' +
-      '<td class="c-risk"><span class="riskcell"><span class="meter' + (lvl === 'High' ? '' : ' meter--quiet') + '" aria-hidden="true"><i style="transform:scaleX(' + m.churnRisk / 100 + ')"></i></span>' +
-        '<strong class="' + (lvl === 'High' ? 'accent-text' : '') + '">' + m.churnRisk + '%</strong><small class="faint">' + lvl + '</small></span></td>' +
+      '<td class="c-risk"><span class="riskcell"><span class="meter' + (lvl === 'High' ? ' meter--danger' : ' meter--quiet') + '" aria-hidden="true"><i style="transform:scaleX(' + m.churnRisk / 100 + ')"></i></span>' +
+        '<strong class="' + (lvl === 'High' ? 'danger-text' : '') + '">' + m.churnRisk + '%</strong><small class="faint">' + lvl + '</small></span></td>' +
       '<td class="t-acts"><button class="icon-btn" type="button" data-wa="' + m.id + '" aria-label="WhatsApp ' + esc(m.name) + '" data-tip="WhatsApp">' + icon('message') + '</button>' +
         '<a class="icon-btn" href="#/members/' + m.id + '" aria-label="Open ' + esc(m.name) + '">' + icon('chevronRight') + '</a></td></tr>';
   }
@@ -224,7 +224,7 @@
         else if (kind === 'export') done('Exported ' + people(ids.length) + ' to muscle-flex-members.csv.');
         else if (kind === 'freeze') {
           ui.modal({
-            title: 'Freeze ' + people(ids.length) + '?', subtitle: 'Access pauses today. £5 a month holding fee. Unfreeze any time.',
+            title: 'Freeze ' + people(ids.length) + '?', subtitle: 'Access pauses today. ₹300 a month holding fee. Unfreeze any time.',
             body: '<p class="muted">They each get a WhatsApp confirming the freeze and how to come back.</p>',
             footer: '<button class="btn btn--ghost" type="button" data-close>Not now</button><button class="btn btn--primary" type="button" id="freeze-go">Freeze</button>',
             onOpen: function (el, close) {
